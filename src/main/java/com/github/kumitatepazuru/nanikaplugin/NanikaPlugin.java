@@ -9,6 +9,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,14 +48,19 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         assert player != null;
         Location pos = player.getLocation();
         player.sendMessage("§c§oあなたは死にました。§r\n§f§l死亡場所:[ X:"+pos.getBlockX()+" Y:"+pos.getBlockY()+" Z:"+pos.getBlockZ()+" ]");
-        Bukkit.getServer().getScheduler().runTaskLater(this, () -> player.getWorld().spawnParticle(
-                Particle.END_ROD,
-                pos,
-                1000,
-                0.1,
-                255,
-                0.1,
-                0
-        ),2L);
+        BukkitTask task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                player.getWorld().spawnParticle(
+                        Particle.END_ROD,
+                        pos,
+                        1000,
+                        0.1,
+                        255,
+                        0.1,
+                        0
+                );
+            }
+        }.runTaskTimer(this, 0, 1L);
     }
 }

@@ -62,5 +62,6 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                 );
             }
         }.runTaskTimer(this, 0, 1L);
+        Bukkit.getServer().getScheduler().runTaskLater(this, task::cancel,100L);
     }
 }

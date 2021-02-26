@@ -30,7 +30,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         int index = new Random().nextInt(youkoso_msg.size());
         String result = youkoso_msg.get(index);
-        player.sendMessage("§2§o"+result+"§r§l "+player.getName());
+        getServer().broadcastMessage("§2§o"+result+"§r§l "+player.getName());
         player.sendTitle("§9なにかサーバー！","§oPowered by Riku Ueda",20,200,20);
         Bukkit.dispatchCommand(player, "cp menu item "+player.getName());
     }

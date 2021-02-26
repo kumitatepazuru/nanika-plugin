@@ -2,7 +2,7 @@ package com.github.kumitatepazuru.nanikaplugin;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -45,6 +45,15 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         Player player = event.getEntity().getPlayer();
         assert player != null;
         Location pos = player.getLocation();
-        player.sendMessage("§c§oあなたは死にました。§r\n§f§l死亡場所:[ X:"+Math.ceil(pos.getX())+" Y:"+Math.ceil(pos.getY())+" Z:"+Math.ceil(pos.getZ())+" ]");
+        player.sendMessage("§c§oあなたは死にました。§r\n§f§l死亡場所:[ X:"+pos.getBlockX()+" Y:"+pos.getBlockY()+" Z:"+pos.getBlockZ()+" ]");
+        player.getWorld().spawnParticle(
+                Particle.END_ROD,
+                pos,
+                100,
+                255,
+                0.1,
+                0.1,
+                0
+        );
     }
 }

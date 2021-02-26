@@ -46,14 +46,14 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         assert player != null;
         Location pos = player.getLocation();
         player.sendMessage("§c§oあなたは死にました。§r\n§f§l死亡場所:[ X:"+pos.getBlockX()+" Y:"+pos.getBlockY()+" Z:"+pos.getBlockZ()+" ]");
-        player.getWorld().spawnParticle(
+        Bukkit.getServer().getScheduler().runTaskLater(this, () -> player.getWorld().spawnParticle(
                 Particle.END_ROD,
                 pos,
-                100,
+                1000,
                 0.1,
                 255,
                 0.1,
                 0
-        );
+        ),2L);
     }
 }

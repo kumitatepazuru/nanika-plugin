@@ -1,6 +1,7 @@
 package com.github.kumitatepazuru.nanikaplugin;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
@@ -46,14 +47,19 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         assert player != null;
         Location pos = player.getLocation();
         player.sendMessage("§c§oあなたは死にました。§r\n§f§l死亡場所:[ X:"+pos.getBlockX()+" Y:"+pos.getBlockY()+" Z:"+pos.getBlockZ()+" ]");
-        player.getWorld().spawnParticle(
-                Particle.END_ROD,
-                pos,
-                100,
-                255,
-                0.1,
-                0.1,
-                0
+//        player.getWorld().spawnParticle(
+//                Particle.END_ROD,
+//                pos,
+//                100,
+//                255,
+//                0.1,
+//                0.1,
+//                0
+//        );
+        player.getWorld().playEffect(
+                pos, // 発生させる場所
+                Effect.DRAGON_BREATH, // エフェクトの種類
+                0 // 大抵の場合は無意味
         );
     }
 }

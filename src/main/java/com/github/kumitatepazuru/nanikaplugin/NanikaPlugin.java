@@ -45,6 +45,6 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         Player player = event.getEntity().getPlayer();
         assert player != null;
         Location pos = player.getLocation();
-        player.sendMessage("§c§oあなたは死にました。§r\n§f§l死亡場所:[ X:"+pos.getX()+" Y:"+pos.getY()+" Z:"+pos.getZ()+" ]");
+        player.sendMessage("§c§oあなたは死にました。§r\n§f§l死亡場所:[ X:"+Math.ceil(pos.getX())+" Y:"+Math.ceil(pos.getY())+" Z:"+Math.ceil(pos.getZ())+" ]");
     }
 }

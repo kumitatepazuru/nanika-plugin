@@ -99,6 +99,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
             assert item != null;
             int index = Integer.parseInt(Objects.requireNonNull(item.getItemMeta()).getDisplayName());
             player.sendMessage(String.valueOf(index));
+            player.closeInventory();
             player.openInventory(die_inventory.get(index));
         }
     }

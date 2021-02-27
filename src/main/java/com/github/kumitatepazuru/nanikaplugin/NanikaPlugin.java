@@ -97,7 +97,9 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
             HumanEntity player = e.getPlayer();
             ItemStack item = e.getInventory().getItem(0);
             assert item != null;
-            player.openInventory(die_inventory.get(Integer.parseInt(Objects.requireNonNull(item.getItemMeta()).getDisplayName())));
+            int index = Integer.parseInt(Objects.requireNonNull(item.getItemMeta()).getDisplayName());
+            player.sendMessage(String.valueOf(index));
+            player.openInventory(die_inventory.get(index));
         }
     }
 }

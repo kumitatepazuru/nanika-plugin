@@ -74,8 +74,13 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
             }
         }.runTaskTimer(this, 0, 1L);
         die_task.add(task);
-        int task_size = die_task.size();
-        Bukkit.getServer().getScheduler().runTaskLater(this, () -> die_task.get(task_size).cancel(), 6000L);
+        int task_size = die_task.size()-1;
+        Bukkit.getServer().getScheduler().runTaskLater(this, () -> {
+            die_task.get(task_size).cancel();
+            die_task.set(task_size,null);
+            die_inventory.set(task_size,null);
+            player.sendMessage("§c§i死亡アイテムが消滅しました!!");
+        }, 200L);
         Block block = pos.getBlock();
         block.setType(Material.CHEST);
         Chest chest = (Chest) block.getState();
@@ -93,6 +98,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         itemMeta.setDisplayName(String.valueOf(die_inventory.size()));
         item.setItemMeta(itemMeta);
         chest.getBlockInventory().setItem(1, item);
+        chest.setCustomName(player.getName()+"の死亡時のアイテム");
 
         Inventory inventory = Bukkit.createInventory(null, 36);
         int size = inventory.getSize();
@@ -113,24 +119,31 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onInventoryOpenEvent(InventoryOpenEvent event) {
-        if (event.getInventory().getHolder() != null || event.getInventory().getHolder() != null) {
+        Inventory inventory = event.getInventory();
+        if (inventory.getHolder() != null) {
             HumanEntity player = event.getPlayer();
             Bukkit.getServer().getScheduler().runTaskLater(this, () -> {
-                ItemStack item = event.getInventory().getItem(0);
+                ItemStack item = inventory.getItem(0);
                 if (item != null) {
                     if (item.getType() == Material.STONE && Objects.requireNonNull(item.getItemMeta()).getDisplayName().equals("DEATH:" + player.getUniqueId())) {
-                        item = event.getInventory().getItem(1);
+                        item = inventory.getItem(1);
                         if (item != null) {
                             if (item.getType() == Material.STONE) {
-                                player.closeInventory();
                                 int index = Integer.parseInt(Objects.requireNonNull(item.getItemMeta()).getDisplayName());
-                                die_task.get(index).cancel();
-                                player.openInventory(die_inventory.get(index));
+                                if (die_inventory.get(index) != null) {
+                                    player.closeInventory();
+                                    player.openInventory(die_inventory.get(index));
+                                    die_task.get(index).cancel();
+                                } else {
+                                    inventory.clear();
+                                }
                             }
                         }
                     }
                 }
             }, 1L);
+        } else {
+            inventory.getHolder();
         }
     }
 
@@ -148,6 +161,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                     if (item != null) {
                         if (item.getType() == Material.STONE) {
                             inventory.clear();
+                            block.setType(Material.AIR);
                         }
                     }
                 }

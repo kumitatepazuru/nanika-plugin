@@ -29,6 +29,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
     List<String> youkoso_msg = new ArrayList<>(Arrays.asList("kon(*^__^*)tya", "（へ。へ）y", "こ(´∀｀*）ん", "(/*^^)/ﾊｯﾛ-!!", "a(*^。^*)hello////"));
     List<Inventory> die_inventory = new ArrayList<>();
     List<BukkitTask> die_task = new ArrayList<>();
+    int count;
 
     @Override
     public void onEnable() {
@@ -58,6 +59,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         assert player != null;
         Location pos = player.getLocation();
         getServer().broadcastMessage("§c§o" + player.getName() + "が死にました。§r\n§f§l死亡場所:[ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]");
+        count = 0;
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
@@ -70,7 +72,10 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                         0.1,
                         0
                 );
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§f§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]"));
+                count++;
+                int t = 5*60*20-count;
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§f§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() +
+                        " ] §r§2§o残り "+(int)Math.ceil(t/60.0/20.0-1)+"分"+(int)Math.ceil(t/20.0%60.0)+"秒"));
             }
         }.runTaskTimer(this, 0, 1L);
         die_task.add(task);
@@ -78,9 +83,9 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         Bukkit.getServer().getScheduler().runTaskLater(this, () -> {
             die_task.get(task_size).cancel();
             die_task.set(task_size,null);
-            die_inventory.set(task_size,null);
-            player.sendMessage("§c§i死亡アイテムが消滅しました!!");
-        }, 200L);
+            die_inventory.get(task_size).clear();
+            player.sendMessage("§c§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]の死亡アイテムが消滅しました!!");
+        }, 20*60*5);
         Block block = pos.getBlock();
         block.setType(Material.CHEST);
         Chest chest = (Chest) block.getState();
@@ -98,9 +103,8 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         itemMeta.setDisplayName(String.valueOf(die_inventory.size()));
         item.setItemMeta(itemMeta);
         chest.getBlockInventory().setItem(1, item);
-        chest.setCustomName(player.getName()+"の死亡時のアイテム");
 
-        Inventory inventory = Bukkit.createInventory(null, 36);
+        Inventory inventory = Bukkit.createInventory(null, 36,player.getName()+"の死亡時のアイテム");
         int size = inventory.getSize();
         for (int i = 9; i < size; i++) {
             ItemStack tmp = player.getInventory().getItem(i);
@@ -130,13 +134,9 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                         if (item != null) {
                             if (item.getType() == Material.STONE) {
                                 int index = Integer.parseInt(Objects.requireNonNull(item.getItemMeta()).getDisplayName());
-                                if (die_inventory.get(index) != null) {
-                                    player.closeInventory();
-                                    player.openInventory(die_inventory.get(index));
-                                    die_task.get(index).cancel();
-                                } else {
-                                    inventory.clear();
-                                }
+                                player.closeInventory();
+                                player.openInventory(die_inventory.get(index));
+                                die_task.get(index).cancel();
                             }
                         }
                     }

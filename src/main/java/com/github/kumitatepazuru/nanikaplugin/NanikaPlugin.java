@@ -12,6 +12,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -27,6 +28,7 @@ import java.util.*;
 public final class NanikaPlugin extends JavaPlugin implements Listener {
     List<String> youkoso_msg = new ArrayList<>(Arrays.asList("kon(*^__^*)tya", "（へ。へ）y", "こ(´∀｀*）ん", "(/*^^)/ﾊｯﾛ-!!", "a(*^。^*)hello////"));
     List<Inventory> die_inventory = new ArrayList<>();
+    List<BukkitTask> die_task = new ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -68,39 +70,88 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                         0.1,
                         0
                 );
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR,new TextComponent("§f§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]"));
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§f§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]"));
             }
         }.runTaskTimer(this, 0, 1L);
-        Bukkit.getServer().getScheduler().runTaskLater(this, task::cancel, 6000L);
+        die_task.add(task);
+        int task_size = die_task.size();
+        Bukkit.getServer().getScheduler().runTaskLater(this, () -> die_task.get(task_size).cancel(), 6000L);
         Block block = pos.getBlock();
         block.setType(Material.CHEST);
         Chest chest = (Chest) block.getState();
+
         ItemStack item = new ItemStack(Material.STONE);
         ItemMeta itemMeta = item.getItemMeta();
         assert itemMeta != null;
+        itemMeta.setDisplayName("DEATH:" + player.getUniqueId());
+        item.setItemMeta(itemMeta);
+        chest.getBlockInventory().setItem(0, item);
+
+        item = new ItemStack(Material.STONE);
+        itemMeta = item.getItemMeta();
+        assert itemMeta != null;
         itemMeta.setDisplayName(String.valueOf(die_inventory.size()));
         item.setItemMeta(itemMeta);
-        chest.getBlockInventory().setItem(0,item);
-        Inventory inventory = Bukkit.createInventory(null,36);
-        for (int i=0;i<player.getInventory().getSize();i++){
+        chest.getBlockInventory().setItem(1, item);
+
+        Inventory inventory = Bukkit.createInventory(null, 36);
+        int size = inventory.getSize();
+        for (int i = 9; i < size; i++) {
             ItemStack tmp = player.getInventory().getItem(i);
             if (tmp != null) {
-                inventory.setItem(i, tmp);
+                inventory.setItem(i - 9, tmp);
+            }
+        }
+        for (int i = 0; i < 9; i++) {
+            ItemStack tmp = player.getInventory().getItem(i);
+            if (tmp != null) {
+                inventory.setItem(i + size - 9, tmp);
             }
         }
         die_inventory.add(inventory);
     }
 
     @EventHandler
-    public void onInventoryOpenEvent(InventoryOpenEvent e){
-        if (e.getInventory().getHolder() != null || e.getInventory().getHolder() != null){
-            HumanEntity player = e.getPlayer();
-            ItemStack item = e.getInventory().getItem(0);
-            assert item != null;
-            int index = Integer.parseInt(Objects.requireNonNull(item.getItemMeta()).getDisplayName());
-            player.sendMessage(String.valueOf(index));
-            player.closeInventory();
-            player.openInventory(die_inventory.get(index));
+    public void onInventoryOpenEvent(InventoryOpenEvent event) {
+        if (event.getInventory().getHolder() != null || event.getInventory().getHolder() != null) {
+            HumanEntity player = event.getPlayer();
+            Bukkit.getServer().getScheduler().runTaskLater(this, () -> {
+                ItemStack item = event.getInventory().getItem(0);
+                if (item != null) {
+                    if (item.getType() == Material.STONE && Objects.requireNonNull(item.getItemMeta()).getDisplayName().equals("DEATH:" + player.getUniqueId())) {
+                        item = event.getInventory().getItem(1);
+                        if (item != null) {
+                            if (item.getType() == Material.STONE) {
+                                player.closeInventory();
+                                int index = Integer.parseInt(Objects.requireNonNull(item.getItemMeta()).getDisplayName());
+                                die_task.get(index).cancel();
+                                player.openInventory(die_inventory.get(index));
+                            }
+                        }
+                    }
+                }
+            }, 1L);
+        }
+    }
+
+    @EventHandler
+    public void onBlockBreakEvent(BlockBreakEvent event){
+        Block block = event.getBlock();
+        Player player = event.getPlayer();
+        if (block.getType() == Material.CHEST){
+            Chest chest = (Chest) block.getState();
+            Inventory inventory = chest.getBlockInventory();
+            ItemStack item = inventory.getItem(0);
+            if (item != null) {
+                if (item.getType() == Material.STONE && Objects.requireNonNull(item.getItemMeta()).getDisplayName().equals("DEATH:" + player.getUniqueId())) {
+                    item = inventory.getItem(1);
+                    if (item != null) {
+                        if (item.getType() == Material.STONE) {
+                            inventory.clear();
+                        }
+                    }
+                }
+            }
         }
     }
 }

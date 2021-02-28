@@ -29,6 +29,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
     List<String> youkoso_msg = new ArrayList<>(Arrays.asList("kon(*^__^*)tya", "（へ。へ）y", "こ(´∀｀*）ん", "(/*^^)/ﾊｯﾛ-!!", "a(*^。^*)hello////"));
     List<Inventory> die_inventory = new ArrayList<>();
     List<BukkitTask> die_task = new ArrayList<>();
+    List<BukkitTask> die_task_after = new ArrayList<>();
     int count;
 
     @Override
@@ -75,17 +76,18 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                 count++;
                 int t = 5*60*20-count;
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§f§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() +
-                        " ] §r§2§o残り "+(int)Math.ceil(t/60.0/20.0-1)+"分"+(int)Math.ceil(t/20.0%60.0)+"秒"));
+                        " ] §r§2§o残り "+(int)Math.ceil(t/60.0/20.0-1)+"分"+(int)Math.ceil(t/20.0%60.0-1)+"秒"));
             }
         }.runTaskTimer(this, 0, 1L);
         die_task.add(task);
         int task_size = die_task.size()-1;
-        Bukkit.getServer().getScheduler().runTaskLater(this, () -> {
+        die_task_after.add(Bukkit.getServer().getScheduler().runTaskLater(this, () -> {
             die_task.get(task_size).cancel();
             die_task.set(task_size,null);
             die_inventory.get(task_size).clear();
+            die_task_after.set(task_size,null);
             player.sendMessage("§c§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]の死亡アイテムが消滅しました!!");
-        }, 20*60*5);
+        }, 20));
         Block block = pos.getBlock();
         block.setType(Material.CHEST);
         Chest chest = (Chest) block.getState();
@@ -134,9 +136,13 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                         if (item != null) {
                             if (item.getType() == Material.STONE) {
                                 int index = Integer.parseInt(Objects.requireNonNull(item.getItemMeta()).getDisplayName());
+                                player.sendMessage(String.valueOf(index));
                                 player.closeInventory();
                                 player.openInventory(die_inventory.get(index));
-                                die_task.get(index).cancel();
+                                if (die_task.get(index) != null) {
+                                    die_task.get(index).cancel();
+                                    die_task_after.get(index).cancel();
+                                }
                             }
                         }
                     }
@@ -162,6 +168,11 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                         if (item.getType() == Material.STONE) {
                             inventory.clear();
                             block.setType(Material.AIR);
+                            int index = Integer.parseInt(Objects.requireNonNull(item.getItemMeta()).getDisplayName());
+                            if (die_task.get(index) != null) {
+                                die_task.get(index).cancel();
+                                die_task_after.get(index).cancel();
+                            }
                         }
                     }
                 }

@@ -40,12 +40,20 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
     File die_f = new File(getDataFolder().getAbsolutePath(), "die.yml");
     FileConfiguration die;
 
-    private int die_msg_task(Player player, Location pos, String id) {
-        BukkitTask task = new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (player != null) {
-                    player.getWorld().spawnParticle(
+    private int die_msg_task(Player player, Location pos, UUID id) {
+        /* TODO: getOfflinePlayerに光っからなかったときの対処*/
+        try {
+            if (player == null) {
+                player = (Player) getServer().getOfflinePlayer(id);
+            }
+        } catch (ClassCastException ignored) {
+        }
+        if (player != null) {
+            Player finalPlayer = player;
+            BukkitTask task = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    finalPlayer.getWorld().spawnParticle(
                             Particle.END_ROD,
                             pos,
                             100,
@@ -56,22 +64,22 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                     );
                     count++;
                     int t = 5 * 60 * 20 - count;
-                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§f§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() +
+                    finalPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§f§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() +
                             " ] §r§2§o残り " + (int) Math.ceil(t / 60.0 / 20.0 - 1) + "分" + (int) Math.ceil(t / 20.0 % 60.0 - 1) + "秒"));
                 }
-            }
-        }.runTaskTimer(this, 1, 1L);
-        die_task.add(task);
-        int task_size = die_task.size() - 1;
-        die_task_after.add(Bukkit.getServer().getScheduler().runTaskLater(this, () -> {
-            die_task.get(task_size).cancel();
-            die_task.set(task_size, null);
-            die_inventory.get(task_size).clear();
-            die_task_after.set(task_size, null);
-            assert player != null;
-            player.sendMessage("§c§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]の死亡アイテムが消滅しました!!");
-        }, 20 * 60 * 5));
-        return task_size;
+            }.runTaskTimer(this, 1, 1L);
+            die_task.add(task);
+            int task_size = die_task.size() - 1;
+            Player finalPlayer1 = player;
+            die_task_after.add(Bukkit.getServer().getScheduler().runTaskLater(this, () -> {
+                die_task.get(task_size).cancel();
+                die_task.set(task_size, null);
+                die_inventory.get(task_size).clear();
+                die_task_after.set(task_size, null);
+                finalPlayer1.sendMessage("§c§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]の死亡アイテムが消滅しました!!");
+            }, 20 * 60 * 5));
+        }
+        return die_task.size() - 1;
     }
 
     @Override
@@ -90,7 +98,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                 die_inventory.add(inventory);
                 Location pos = die.getLocation("die." + i + ".pos");
                 assert pos != null;
-                die_msg_task(null, pos, die.getString("die." + i + ".id"));
+                die_msg_task(null, pos, UUID.fromString(Objects.requireNonNull(die.getString("die." + i + ".id"))));
             }
         }
     }
@@ -117,7 +125,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         Location pos = player.getLocation();
         getServer().broadcastMessage("§c§o" + player.getDisplayName() + "が死にました。§r\n§f§l死亡場所:[ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]");
         count = 0;
-        int task_size = die_msg_task(player, pos, player.getUniqueId().toString());
+        int task_size = die_msg_task(player, pos, player.getUniqueId());
         Block block = pos.getBlock();
         block.setType(Material.CHEST);
         Chest chest = (Chest) block.getState();
@@ -141,6 +149,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
         die.set("die." + task_size + ".id", player.getUniqueId().toString());
         die.set("die." + task_size + ".name", player.getDisplayName());
         die.set("die." + task_size + ".pos", pos);
+        player.saveData();
         /* TODO: アーマー保存も実現　*/
         for (int i = 9; i < size; i++) {
             ItemStack tmp = player.getInventory().getItem(i);
@@ -196,7 +205,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onBlockBreakEvent(BlockBreakEvent event) {
+    public void blockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
         if (block.getType() == Material.CHEST) {

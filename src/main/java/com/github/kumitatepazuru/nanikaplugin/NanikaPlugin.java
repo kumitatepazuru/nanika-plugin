@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.*;
 
 public final class NanikaPlugin extends JavaPlugin implements Listener {
-    List<String> youkoso_msg = new ArrayList<>(Arrays.asList("kon(*^__^*)tya", "（へ。へ）y", "こ(´∀｀*）ん", "(/*^^)/ﾊｯﾛ-!!", "a(*^。^*)hello////"));
+    List<String> hello_msg = new ArrayList<>(Arrays.asList("kon(*^__^*)tya", "（へ。へ）y", "こ(´∀｀*）ん", "(/*^^)/ﾊｯﾛ-!!", "a(*^。^*)hello////"));
     List<Inventory> die_inventory = new ArrayList<>();
     List<BukkitTask> die_task = new ArrayList<>();
     List<BukkitTask> die_task_after = new ArrayList<>();
@@ -76,7 +76,13 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                 die_task.set(task_size, null);
                 die_inventory.get(task_size).clear();
                 die_task_after.set(task_size, null);
+                die.set("die."+task_size,null);
                 finalPlayer1.sendMessage("§c§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]の死亡アイテムが消滅しました!!");
+                try {
+                    die.save(die_f);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }, 20 * 60 * 5));
         }
         return die_task.size() - 1;
@@ -111,8 +117,8 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        int index = new Random().nextInt(youkoso_msg.size());
-        String result = youkoso_msg.get(index);
+        int index = new Random().nextInt(hello_msg.size());
+        String result = hello_msg.get(index);
         getServer().broadcastMessage("§2§o" + result + "§r§l " + player.getDisplayName());
         player.sendTitle("§9なにかサーバー！", "§oPowered by Riku Ueda", 20, 40, 20);
         Bukkit.dispatchCommand(player, "cp menu item " + player.getDisplayName());

@@ -5,3 +5,10 @@ api-version: 1.16
 authors: [ kumitatepazuru ]
 description: なにかサーバー専用プラグイン
 website: https://github.com/kumitatepazuru/nanika_plugin/
+command:
+  sign:
+    description: 今いる場所をマーキングして来やすくします。
+    usage: /sign
+  stopsign:
+    description: マーキングをやめます。
+    usage: /stopsign

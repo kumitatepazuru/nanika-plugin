@@ -8,6 +8,8 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -41,7 +43,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
     FileConfiguration die;
 
     private int die_msg_task(Player player, Location pos, UUID id) {
-        /* TODO: getOfflinePlayerに光っからなかったときの対処*/
+        /* TODO: getOfflinePlayerにひっかからなかったときの対処*/
         try {
             if (player == null) {
                 player = (Player) getServer().getOfflinePlayer(id);
@@ -76,7 +78,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                 die_task.set(task_size, null);
                 die_inventory.get(task_size).clear();
                 die_task_after.set(task_size, null);
-                die.set("die."+task_size,null);
+                die.set("die." + task_size, null);
                 finalPlayer1.sendMessage("§c§l死亡場所 [ X:" + pos.getBlockX() + " Y:" + pos.getBlockY() + " Z:" + pos.getBlockZ() + " ]の死亡アイテムが消滅しました!!");
                 try {
                     die.save(die_f);
@@ -199,7 +201,7 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
                                 }
                             }
                         }
-                    } else if (item.getType() == Material.STONE && Objects.requireNonNull(item.getItemMeta()).getDisplayName().contains("DEATH:")){
+                    } else if (item.getType() == Material.STONE && Objects.requireNonNull(item.getItemMeta()).getDisplayName().contains("DEATH:")) {
                         player.closeInventory();
                         player.sendMessage("このチェストは他の人のチェストです！");
                     }
@@ -236,4 +238,18 @@ public final class NanikaPlugin extends JavaPlugin implements Listener {
             }
         }
     }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
+        if (cmd.getName().equals("sign")) {
+            if (args.length != 0) {
+                sender.sendMessage("マーキングしました。");
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
+    }
 }
+
